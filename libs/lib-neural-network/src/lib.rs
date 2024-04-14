@@ -8,8 +8,8 @@ pub struct NeuralNetwork {
 }
 
 impl NeuralNetwork {
-    fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
-        self.layers.iter().fold(inputs, |acc, l| l.propagate(acc))
+    fn propagate(&self, inputs: &[f32]) -> Vec<f32> {
+        self.layers.iter().fold(inputs.to_vec(), |acc, l| l.propagate(acc.as_slice()))
     }
 
     fn get_layers(&self) -> &[Layer] {
@@ -37,7 +37,7 @@ struct Layer {
 }
 
 impl Layer {
-    fn propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
+    fn propagate(&self, inputs: &[f32]) -> Vec<f32> {
         self.neurons.iter().map(|n| {
             n.propagate(inputs.clone()).map_err(|e| eprintln!("[ERR] {}", e)).unwrap()
         }).collect()
@@ -60,7 +60,7 @@ struct Neuron {
 }
 
 impl Neuron {
-    fn propagate(&self, inputs: Vec<f32>) -> Result<f32, String> {
+    fn propagate(&self, inputs: &[f32]) -> Result<f32, String> {
         if inputs.len() != self.weights.len() {
             return Err(format!("Input length {} does not match weights length {}", inputs.len(), self.weights.len()));
         }
@@ -198,5 +198,61 @@ mod test {
 
             
         }
+
+    }
+
+    mod propagate {
+        use super::*;
+        
+        #[test]
+        fn neuron_propagation() {
+            let neuron = Neuron {
+            bias: 0.5,
+            weights: vec![-0.3, 0.8],
+        };
+
+        // Ensures `.max()` (our ReLU) works:
+        approx::assert_relative_eq!(
+            neuron.propagate(&[-10.0, -10.0]).unwrap(),
+            0.0,
+        );  
+
+        // `0.5` and `1.0` chosen by a fair dice roll:
+        approx::assert_relative_eq!(
+            neuron.propagate(&[0.5, 1.0]).unwrap(),
+            (-0.3 * 0.5) + (0.8 * 1.0) + 0.5,
+        );
+
+        }
+
+        #[test]
+        fn layers_apply_to_all_neurons() {
+            let layer = Layer {
+                neurons: vec![
+                    Neuron {
+                        bias: 0.5,
+                        weights: vec![-0.3, 0.8],
+                    },
+                    Neuron {
+                        bias: 0.3,
+                        weights: vec![-0.2, 0.3],
+                    }
+                ]
+            };
+
+            let propagation_output = layer.propagate(&[0.5, 1.0]);
+            approx::assert_relative_eq!(
+                propagation_output[0],
+                (0.5 * -0.3 + 1.0 * 0.8 + 0.5),
+            );
+
+
+            approx::assert_relative_eq!(
+                propagation_output[1],
+                (0.5*-0.2 + 1.0*0.3 + 0.3)
+            );
+        }
+
+
     }
 }
