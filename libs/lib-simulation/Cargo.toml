@@ -1,15 +1,10 @@
 [package]
-name = "learn-to-fly-gui"
+name = "lib-simulation"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-eframe = "0.27.2"
-egui = "0.27.2"
-emath = "0.27.2"
-env_logger = "0.11.3"
-epaint = "0.27.2"
-lib-simulation = { path = "../../libs/lib-simulation/"}
+nalgebra = {version = "0.32.5"}
 rand = "0.8.5"
