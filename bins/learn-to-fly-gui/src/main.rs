@@ -57,6 +57,7 @@ impl LearnToFlyApp {
 
 impl eframe::App for LearnToFlyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.simulation.step();
         egui::TopBottomPanel::bottom("config_panel").show(ctx, |ui| {
             ui.heading("Simulation options");
             ui.horizontal(|ui| {

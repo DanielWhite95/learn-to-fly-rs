@@ -16,6 +16,12 @@ impl Simulation {
     pub fn world(&self) -> &World {
         &self.world
     }
+    
+    pub fn step(&mut self) {
+        for animal in self.world.animals_mut() {
+            animal.position = Point2::new(animal.position.x + animal.speed * animal.rotation.angle().cos(), animal.position.y + animal.speed * animal.rotation.angle().sin())
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -35,6 +41,10 @@ impl World {
     
     pub fn animals(&self) -> &[Animal] {
         &self.animals
+    }
+
+    pub fn animals_mut(&mut self) -> &mut [Animal] {
+        &mut self.animals
     }
     
     pub fn food(&self) -> &[Food] {
