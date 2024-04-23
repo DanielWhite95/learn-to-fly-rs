@@ -12,4 +12,5 @@ emath = "0.27.2"
 env_logger = "0.11.3"
 epaint = "0.27.2"
 lib-simulation = { path = "../../libs/lib-simulation/"}
+nalgebra = "0.32.5"
 rand = "0.8.5"

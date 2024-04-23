@@ -4,7 +4,10 @@ use egui::{pos2, Color32, Pos2, Stroke};
 use emath::RectTransform;
 use rand;
 use rand::RngCore;
-use lib_simulation::Simulation;
+use lib_simulation::{Animal, Food, Simulation};
+use nalgebra::geometry::Point2;
+use nalgebra::Rotation2;
+use std::f32::consts::PI;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -41,13 +44,22 @@ impl Default for LearnToFlyApp {
 }
 
 impl LearnToFlyApp {
-    fn place_food(pos: &Pos2, screen_transform: RectTransform ) -> epaint::Shape {
-        epaint::Shape::Circle(epaint::CircleShape{ center: screen_transform.transform_pos_clamped(*pos), radius: 5.0, fill: Color32::BLUE, stroke: Stroke::NONE})
+    fn place_food(food: &Food, screen_transform: RectTransform ) -> epaint::Shape {
+        let food_pos = food.position();
+        epaint::Shape::Circle(epaint::CircleShape{ center: screen_transform.transform_pos_clamped(pos2(food_pos.x, food_pos.y)), radius: 5.0, fill: Color32::BLUE, stroke: Stroke::NONE})
     }
 
-    fn place_bird(pos: &Pos2, screen_transform: RectTransform ) -> epaint::Shape {
+    fn place_bird(animal: &Animal, screen_transform: RectTransform ) -> epaint::Shape {
+        let segment_size = 0.01;
+        let animal_pos = animal.position();
+        let animal_rot = animal.rotation().angle();
+        let vertices = vec![
+            pos2(animal_pos.x + (animal_rot + 2.0 / 3.0 * PI).cos() *  segment_size , animal_pos.y + (animal_rot + 2.0 / 3.0 * PI).sin() * segment_size),
+            pos2(animal_pos.x + (animal_rot + 4.0 / 3.0 * PI).cos() * segment_size, animal_pos.y + (animal_rot + 4.0 / 3.0 * PI).sin() * segment_size),
+            pos2(animal_pos.x + animal_rot.cos() * segment_size, animal_pos.y + animal_rot.sin() * segment_size )
+        ];
         let traingle_shape = epaint::PathShape::convex_polygon(
-            vec![pos2(pos.x - 0.01, pos.y), pos2(pos.x, pos.y + 0.01), pos2(pos.x + 0.01, pos.y)].iter().map(|&p| screen_transform.transform_pos_clamped(p)).collect(),
+            vertices.iter().map(|&p| screen_transform.transform_pos_clamped(p)).collect(),
             Color32::GREEN,
             Stroke::NONE
         );
@@ -91,11 +103,11 @@ impl eframe::App for LearnToFlyApp {
 
                 let mut shapes = vec![];
                 for i in self.simulation.world().animals() {
-                    shapes.push(Self::place_bird(&pos2(i.position().x, i.position().y), to_screen ));
+                    shapes.push(Self::place_bird(i, to_screen ));
                 }
 
                 for i in self.simulation.world().food() {
-                    shapes.push(Self::place_food(&pos2(i.position().x, i.position().y), to_screen ));
+                    shapes.push(Self::place_food(i, to_screen ));
                 }
 
                 ui.painter().extend(shapes);

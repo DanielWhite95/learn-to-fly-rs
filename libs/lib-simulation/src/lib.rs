@@ -19,7 +19,8 @@ impl Simulation {
     
     pub fn step(&mut self) {
         for animal in self.world.animals_mut() {
-            animal.position = Point2::new(animal.position.x + animal.speed * animal.rotation.angle().cos(), animal.position.y + animal.speed * animal.rotation.angle().sin())
+            animal.position.x += animal.speed * animal.rotation.angle().cos();
+            animal.position.y += animal.speed * animal.rotation.angle().sin();
         }
     }
 }
@@ -63,8 +64,8 @@ pub struct Animal {
 impl Animal {
     fn random(rng: &mut dyn RngCore) -> Self {
         Self {
-            position: Point2::new(rng.gen(), rng.gen()),
-            rotation: Rotation2::new(rng.gen()),
+            position: rng.gen(),
+            rotation: rng.gen(),
             speed: 0.002
         }
     }
@@ -87,7 +88,7 @@ pub struct Food {
 impl Food {
     fn random(rng: &mut dyn RngCore) -> Self {
         Self {
-            position: Point2::new(rng.gen(), rng.gen())
+            position: rng.gen()
         }
     }
 
