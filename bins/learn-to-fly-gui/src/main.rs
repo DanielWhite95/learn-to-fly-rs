@@ -56,7 +56,7 @@ impl LearnToFlyApp {
         let vertices = vec![
             pos2(animal_pos.x + (animal_rot + 2.0 / 3.0 * PI).cos() *  segment_size , animal_pos.y + (animal_rot + 2.0 / 3.0 * PI).sin() * segment_size),
             pos2(animal_pos.x + (animal_rot + 4.0 / 3.0 * PI).cos() * segment_size, animal_pos.y + (animal_rot + 4.0 / 3.0 * PI).sin() * segment_size),
-            pos2(animal_pos.x + animal_rot.cos() * segment_size, animal_pos.y + animal_rot.sin() * segment_size )
+            pos2(animal_pos.x + animal_rot.cos() * segment_size * 2.0, animal_pos.y + animal_rot.sin() * segment_size * 2.0 )
         ];
         let traingle_shape = epaint::PathShape::convex_polygon(
             vertices.iter().map(|&p| screen_transform.transform_pos_clamped(p)).collect(),

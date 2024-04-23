@@ -20,7 +20,9 @@ impl Simulation {
     pub fn step(&mut self) {
         for animal in self.world.animals_mut() {
             animal.position.x += animal.speed * animal.rotation.angle().cos();
+            animal.position.x = if animal.position.x > 1.0 { animal.position.x - 1.0 } else if animal.position.x < 0.0 { animal.position.x + 1.0 } else {animal.position.x};
             animal.position.y += animal.speed * animal.rotation.angle().sin();
+            animal.position.y = if animal.position.y > 1.0 { animal.position.y - 1.0 } else if animal.position.y < 0.0 { animal.position.y + 1.0 } else {animal.position.y};
         }
     }
 }
