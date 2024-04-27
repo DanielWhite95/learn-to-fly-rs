@@ -1,6 +1,13 @@
+mod world;
+mod food;
+mod animal;
+mod eye;
+
+pub use self::{animal::*, food::*, world::*};
 use nalgebra::geometry::Point2;
-use nalgebra::Rotation2;
+use nalgebra::{Rotation2, wrap, distance};
 use rand::{rngs, Rng, RngCore};
+
 
 pub struct Simulation {
     world: World
@@ -16,86 +23,29 @@ impl Simulation {
     pub fn world(&self) -> &World {
         &self.world
     }
+
+    fn process_movements(&mut self) {
+        for animal in &mut self.world.animals {
+            animal.position.x = wrap(animal.position.x + animal.speed * animal.rotation.angle().cos(), 0.0, 1.0);
+            animal.position.y = wrap(animal.position.y + animal.speed * animal.rotation.angle().sin(), 0.0, 1.0)
+        }
+    }
+
+    fn process_collisions(&mut self, rng: &mut dyn RngCore) {
+        for animal in &mut self.world.animals {
+            for food in &mut self.world.food {
+                if distance(&animal.position, &food.position) < 0.01 {
+                    food.position = rng.gen();
+                    animal.score += 1;
+                }
+                
+            }
+        }
+    }
+
     
-    pub fn step(&mut self) {
-        for animal in self.world.animals_mut() {
-            animal.position.x += animal.speed * animal.rotation.angle().cos();
-            animal.position.x = if animal.position.x > 1.0 { animal.position.x - 1.0 } else if animal.position.x < 0.0 { animal.position.x + 1.0 } else {animal.position.x};
-            animal.position.y += animal.speed * animal.rotation.angle().sin();
-            animal.position.y = if animal.position.y > 1.0 { animal.position.y - 1.0 } else if animal.position.y < 0.0 { animal.position.y + 1.0 } else {animal.position.y};
-        }
+    pub fn step(&mut self, rng: &mut dyn RngCore) {
+        self.process_movements();
+        self.process_collisions(rng);
     }
 }
-
-#[derive(Debug)]
-pub struct World {
-    animals: Vec<Animal>,
-    food: Vec<Food>
-}
-
-
-impl World {
-    fn random(rng: &mut dyn RngCore, num_animals: usize, num_food: usize) -> Self {
-        Self {
-            animals: (0..num_animals).map(|_| Animal::random(rng)).collect(),
-            food: (0..num_food).map(|_| Food::random(rng)).collect()
-        }
-    }
-    
-    pub fn animals(&self) -> &[Animal] {
-        &self.animals
-    }
-
-    pub fn animals_mut(&mut self) -> &mut [Animal] {
-        &mut self.animals
-    }
-    
-    pub fn food(&self) -> &[Food] {
-        &self.food
-    }
-} 
-
-
-#[derive(Debug)]
-pub struct Animal {
-    position: Point2<f32>,
-    rotation: Rotation2<f32>,
-    speed: f32
-}
-
-impl Animal {
-    fn random(rng: &mut dyn RngCore) -> Self {
-        Self {
-            position: rng.gen(),
-            rotation: rng.gen(),
-            speed: 0.002
-        }
-    }
-
-    pub fn position(&self) -> Point2<f32> {
-        self.position
-    }
-
-    pub fn rotation(&self) -> Rotation2<f32> {
-        self.rotation
-    }
-}
-
-#[derive(Debug)]
-pub struct Food {
-    position: Point2<f32>
-}
-
-
-impl Food {
-    fn random(rng: &mut dyn RngCore) -> Self {
-        Self {
-            position: rng.gen()
-        }
-    }
-
-    pub fn position(&self) -> Point2<f32> {
-        self.position
-    }
-}
-

@@ -46,7 +46,7 @@ impl Default for LearnToFlyApp {
 impl LearnToFlyApp {
     fn place_food(food: &Food, screen_transform: RectTransform ) -> epaint::Shape {
         let food_pos = food.position();
-        epaint::Shape::Circle(epaint::CircleShape{ center: screen_transform.transform_pos_clamped(pos2(food_pos.x, food_pos.y)), radius: 5.0, fill: Color32::BLUE, stroke: Stroke::NONE})
+        epaint::Shape::Circle(epaint::CircleShape{ center: screen_transform.transform_pos_clamped(pos2(food_pos.x, food_pos.y)), radius: 2.0, fill: Color32::BLUE, stroke: Stroke::NONE})
     }
 
     fn place_bird(animal: &Animal, screen_transform: RectTransform ) -> epaint::Shape {
@@ -56,10 +56,10 @@ impl LearnToFlyApp {
         let vertices = vec![
             pos2(animal_pos.x + (animal_rot + 2.0 / 3.0 * PI).cos() *  segment_size , animal_pos.y + (animal_rot + 2.0 / 3.0 * PI).sin() * segment_size),
             pos2(animal_pos.x + (animal_rot + 4.0 / 3.0 * PI).cos() * segment_size, animal_pos.y + (animal_rot + 4.0 / 3.0 * PI).sin() * segment_size),
-            pos2(animal_pos.x + animal_rot.cos() * segment_size * 2.0, animal_pos.y + animal_rot.sin() * segment_size * 2.0 )
+            pos2(animal_pos.x + animal_rot.cos() * segment_size, animal_pos.y + animal_rot.sin() * segment_size)
         ];
         let traingle_shape = epaint::PathShape::convex_polygon(
-            vertices.iter().map(|&p| screen_transform.transform_pos_clamped(p)).collect(),
+            vertices.iter().map(|&p| screen_transform.transform_pos(p)).collect(),
             Color32::GREEN,
             Stroke::NONE
         );
@@ -69,7 +69,7 @@ impl LearnToFlyApp {
 
 impl eframe::App for LearnToFlyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.simulation.step();
+        self.simulation.step(&mut self.rng);
         egui::TopBottomPanel::bottom("config_panel").show(ctx, |ui| {
             ui.heading("Simulation options");
             ui.horizontal(|ui| {
