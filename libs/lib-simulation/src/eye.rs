@@ -2,10 +2,11 @@ use crate::*;
 use std::f32::consts::*;
 use nalgebra::{Rotation2,Vector2,Point2,wrap};
 
-const FOV_RANGE: f32 = 0.25;
-const FOV_ANGLE: f32 = FRAC_PI_4;
-const CELLS: usize = 13;
+pub(crate) const FOV_RANGE: f32 = 0.75;
+pub(crate) const FOV_ANGLE: f32 = FRAC_PI_4;
+pub(crate) const CELLS: usize = 13;
 
+#[derive(Debug)]
 pub struct Eye {
     fov_range: f32, 
     fov_angle: f32,
@@ -74,12 +75,12 @@ mod tests {
 
     impl TestCase {
         fn vision_to_string_repr(vision: &[f32]) -> String {
-            let chars: Vec<_> = vision.iter().map(|&f| if f > 0.7 {
-                "*"
-            } else if f > 0.3 {
+            let chars: Vec<_> = vision.iter().map(|&f| if f >= 0.7 {
+                "#"
+            } else if f >= 0.3 {
                 "+"
             } else if f > 0.0 {
-                "" 
+                "." 
             } else {
                 " "
             }).collect();
@@ -88,7 +89,7 @@ mod tests {
         }
         
         fn run(self) {
-            let eye = Eye::default();
+            let eye = Eye {fov_range: self.fov_range, fov_angle: self.fov_angle, ..Default::default()};
             let actual_vision = eye.process_vision(Point2::new(self.x, self.y), Rotation2::new(self.rot), self.foods.as_slice());
             let actual_vision = Self::vision_to_string_repr(&actual_vision);
             assert_eq!(actual_vision.as_str(), self.expected_vision);
@@ -120,6 +121,66 @@ mod tests {
             y: 0.5,
             rot: 0.0, 
             expected_vision: expected_vision 
+        }.run()
+    }
+
+    #[test_case(0.00 * PI, "         +   ")] // Food is to our right
+    #[test_case(0.25 * PI, "        +    ")]
+    #[test_case(0.50 * PI, "      +      ")] // Food is in front of us
+    #[test_case(0.75 * PI, "    +        ")]
+    #[test_case(1.00 * PI, "   +         ")] // Food is to our left
+    #[test_case(1.25 * PI, " +           ")]
+    #[test_case(1.50 * PI, "            +")] // Food is behind us
+    #[test_case(1.75 * PI, "           + ")] // (we continue to see it
+    #[test_case(2.00 * PI, "         +   ")] // due to 360° fov_angle.)
+    #[test_case(2.25 * PI, "        +    ")]
+    #[test_case(2.50 * PI, "      +      ")]
+    fn rotations(rot: f32, expected_vision: &'static str) {
+        TestCase {
+            foods: vec![food(0.0, 0.5)],
+            fov_range: 1.0,
+            fov_angle: 2.0 * PI,
+            x: 0.5,
+            y: 0.5,
+            rot,
+            expected_vision,
+        }.run()
+    }
+
+    // Checking the X axis:
+    // (you can see the bird is "flying away" from the foods)
+    #[test_case(0.9, 0.5, "#           #")]
+    #[test_case(0.8, 0.5, "  #       #  ")]
+    #[test_case(0.7, 0.5, "   +     +   ")]
+    #[test_case(0.6, 0.5, "    +   +    ")]
+    #[test_case(0.5, 0.5, "    +   +    ")]
+    #[test_case(0.4, 0.5, "     + +     ")]
+    #[test_case(0.3, 0.5, "     . .     ")]
+    #[test_case(0.2, 0.5, "     . .     ")]
+    #[test_case(0.1, 0.5, "     . .     ")]
+    #[test_case(0.0, 0.5, "             ")]
+    //
+    // Checking the Y axis:
+    // (you can see the bird is "flying alongside" the foods)
+    #[test_case(0.5, 0.0, "            +")]
+    #[test_case(0.5, 0.1, "          + .")]
+    #[test_case(0.5, 0.2, "         +  +")]
+    #[test_case(0.5, 0.3, "        + +  ")]
+    #[test_case(0.5, 0.4, "      +  +   ")]
+    #[test_case(0.5, 0.6, "   +  +      ")]
+    #[test_case(0.5, 0.7, "  + +        ")]
+    #[test_case(0.5, 0.8, "+  +         ")]
+    #[test_case(0.5, 0.9, ". +          ")]
+    #[test_case(0.5, 1.0, "             ")]
+    fn positions(x: f32, y: f32, expected_vision: &'static str) {
+        TestCase {
+            foods: vec![food(1.0, 0.4), food(1.0, 0.6)],
+            fov_range: 1.0,
+            fov_angle: FRAC_PI_2,
+            rot: 3.0 * FRAC_PI_2,
+            x,
+            y,
+            expected_vision,
         }.run()
     }
 }

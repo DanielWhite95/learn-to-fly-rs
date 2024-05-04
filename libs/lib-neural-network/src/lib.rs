@@ -1,4 +1,4 @@
-use std::fmt::format;
+use std::{fmt::format, iter::once};
 
 use rand::{Rng, RngCore};
 
@@ -8,15 +8,15 @@ pub struct NeuralNetwork {
 }
 
 impl NeuralNetwork {
-    fn propagate(&self, inputs: &[f32]) -> Vec<f32> {
+    pub fn propagate(&self, inputs: &[f32]) -> Vec<f32> {
         self.layers.iter().fold(inputs.to_vec(), |acc, l| l.propagate(acc.as_slice()))
     }
 
-    fn get_layers(&self) -> &[Layer] {
+    pub fn get_layers(&self) -> &[Layer] {
         &self.layers
     }
 
-    fn random(layers: Vec<LayerTopology>, rng: &mut dyn RngCore) -> Result<Self, String> {
+    pub fn random(layers: Vec<LayerTopology>, rng: &mut dyn RngCore) -> Result<Self, String> {
         if layers.len() <= 1 {
             return Err(format!("Network must have at least 2 or more layers"))
         }
@@ -25,14 +25,47 @@ impl NeuralNetwork {
         }).collect();
         Ok(NeuralNetwork { layers: built_layers })
     }
+    
+    pub fn weights(&self) -> Vec<f32> {
+        self.layers.iter()
+            .flat_map(|l| l.get_neurons())
+            .flat_map(|n| once(n.bias).chain(n.weights.iter().copied()))
+            .collect()
+    }
+    
+    pub fn from_weights(layers: &[LayerTopology], weights: &[f32]) -> Result<Self, String> {
+        if layers.len() < 1 {
+            return Err("At least one layer needed".into());
+        }
+        let mut read_weigths = 0;
+        let mut current_layer_inputs = layers[0].neurons;
+        let mut built_layers = vec![];
+        for layer in layers.iter().skip(1) {
+            let mut layer_neurons = vec![];
+            for i in (0..layer.neurons) {
+                let bias = weights[read_weigths];
+                let neuron_weigths = &weights[read_weigths+1..read_weigths+1+current_layer_inputs];
+                layer_neurons.push(Neuron{
+                    bias,
+                    weights: neuron_weigths.into()
+                });
+                read_weigths += 1 + current_layer_inputs;
+            }
+            built_layers.push(Layer{neurons: layer_neurons});
+            current_layer_inputs = layer.neurons;
+        }
+        Ok(Self{
+            layers: built_layers
+        })
+    }
 }
 
 pub struct LayerTopology {
-    neurons: usize
+    pub neurons: usize
 }
 
 #[derive(Debug)]
-struct Layer {
+pub struct Layer {
     neurons: Vec<Neuron>
 }
 
@@ -43,7 +76,7 @@ impl Layer {
         }).collect()
     }
 
-    fn get_neurons(&self) -> &[Neuron] {
+    pub fn get_neurons(&self) -> &[Neuron] {
         &self.neurons   
     }
 
@@ -54,7 +87,7 @@ impl Layer {
 
 // Standard Neuron with a ReLU activation function
 #[derive(Debug)]
-struct Neuron {
+pub struct Neuron {
     bias: f32,
     weights: Vec<f32>
 }

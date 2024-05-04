@@ -1,6 +1,6 @@
 use std::{ops::Index, vec::IntoIter};
 
-use rand::{seq::SliceRandom, Rng, RngCore};
+use rand::{distributions::WeightedError, seq::SliceRandom, Rng, RngCore};
 
 
 pub trait Individual {
@@ -152,12 +152,18 @@ impl Selection for RouletteWheelSelection {
     where
         T: Individual,
     {
-        population
-            .choose_weighted(rng, |i| i.fitness())
-            .map_err(|e| {
-                eprintln!("Cannot select individual {:?}", e);
-                GeneticError::SelectionError
-            })
+        let res = population
+            .choose_weighted(rng, |i| i.fitness());
+        match res {
+            Ok(r) => Ok(r),
+            Err(WeightedError::AllWeightsZero) => {
+                population.choose(rng).ok_or(GeneticError::SelectionError)
+            },
+            Err(e) => {
+                eprintln!("Cannot select individual: {:?}", e);
+                Err(GeneticError::SelectionError)
+            }
+        }
     }
 }
 
@@ -168,6 +174,10 @@ pub struct GeneticAlgorithm<S: Selection, C: Crossover, M: Mutation>  {
 }
 
 impl<S: Selection, C: Crossover, M: Mutation> GeneticAlgorithm<S, C, M> {
+    pub fn new(selection_method: S, crossover_algorithm: C, mutation_algorithm: M) -> Self {
+        Self{selection_method, crossover_algorithm, mutation_algorithm}
+    }
+    
     pub fn evolve<T>(&self, population: &[T], rng: &mut dyn RngCore) -> Result<Vec<T>, GeneticError>
     where
         T: Individual,
@@ -179,11 +189,11 @@ impl<S: Selection, C: Crossover, M: Mutation> GeneticAlgorithm<S, C, M> {
             .map(|_| {
                 let parent_a = self.selection_method
                     .select(rng, population)
-                    .map_err(|e| eprintln!("Cannot select first parent"))
+                    .map_err(|e| eprintln!("Cannot select first parent: {e:?}"))
                     .ok();
                 let parent_b = self.selection_method
                     .select(rng, population)
-                    .map_err(|e| eprintln!("Cannot select second parent"))
+                    .map_err(|e| eprintln!("Cannot select second parent: {e:?}"))
                     .ok();
                 let mut new_chromosome = self.crossover_algorithm.mix_parents(rng, parent_a.unwrap().chromosome(), parent_b.unwrap().chromosome()).expect("Cannot mix individuals!");    
                 self.mutation_algorithm.mutate(rng, &mut new_chromosome);
