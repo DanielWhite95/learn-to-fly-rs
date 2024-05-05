@@ -17,6 +17,21 @@ pub struct Animal {
     pub(crate) score: i32,
 }
 
+
+#[derive(Debug)]
+pub struct Brain {
+    nerual_network: NeuralNetwork
+}
+
+impl Brain {
+    pub fn topology(eye: &Eye) -> Vec<LayerTopology> {
+        vec![
+                nn::LayerTopology{ neurons: eye.cells() }, 
+                nn::LayerTopology{ neurons: 2 } // Output is rotation angle and speed 
+            ]
+    }
+}
+
 impl Animal {
     pub fn brain_topology_from_eyes(eye: &Eye) -> Vec<LayerTopology>{
         vec![

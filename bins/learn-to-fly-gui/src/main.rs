@@ -4,7 +4,7 @@ use egui::{pos2, Color32, Pos2, Stroke};
 use emath::RectTransform;
 use rand;
 use rand::RngCore;
-use lib_simulation::{Animal, Food, Simulation};
+use lib_simulation::{Animal, Food, Simulation, Statistics};
 use nalgebra::geometry::Point2;
 use nalgebra::Rotation2;
 use std::f32::consts::PI;
@@ -32,24 +32,25 @@ struct LearnToFlyApp {
     food: u32,
     mut_coeff: f32,
     mut_chance: f32,
-    steps_to_evolution: usize,
-    current_steps: usize
+    generation_length: u32,
+    last_gen_statistics: Option<Statistics>
 }
 
 impl Default for LearnToFlyApp {
     fn default() -> Self {
         let mut rng = Box::new(rand::thread_rng());
-        let mut_chance = 0.5;
-        let mut_coeff = 0.2;
+        let mut_chance = 0.1;
+        let mut_coeff = 0.5;
+        let generation_length = 1000;
         Self {
             rng: rng.clone(),
-            simulation: Simulation::random(&mut rng, 10, 15, mut_chance, mut_coeff),
+            simulation: Simulation::random(&mut rng, 10, 15, mut_chance, mut_coeff, generation_length),
             birds: 10,
             food: 15,
             mut_chance,
             mut_coeff,
-            steps_to_evolution: 200,
-            current_steps: 0
+            generation_length,
+            last_gen_statistics: None
         }
     }
 }
@@ -80,27 +81,49 @@ impl LearnToFlyApp {
 
 impl eframe::App for LearnToFlyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if self.current_steps < self.steps_to_evolution {
-            self.simulation.step(&mut self.rng);
-            self.current_steps += 1;
-        } else {
-            self.current_steps = 0;
-            self.simulation.evolve(&mut self.rng);
+        let step_res = self.simulation.step(&mut self.rng);
+        if step_res.is_some() {
+            self.last_gen_statistics = step_res;
         }
+        let mut rebuild_simulation = false;
         egui::TopBottomPanel::bottom("config_panel").show(ctx, |ui| {
+            ui.heading("Last Generation Statistics");
+            if self.last_gen_statistics.is_some() {
+                ui.vertical(|ui| {
+                    let stat = self.last_gen_statistics.unwrap();
+                    ui.horizontal(|ui| {
+                        ui.label("Average Score:");
+                        ui.label(format!("{:.2}", stat.avg_score));
+                    
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Max Score:");
+                        ui.label(format!("{}", stat.max_score));
+                    
+                    });
+                     ui.horizontal(|ui| {
+                        ui.label("Min Score:");
+                        ui.label(format!("{}", stat.min_score));
+                    
+                    }) 
+
+            });
+            };
+            ui.add_space(10.0);
+
             ui.heading("Simulation options");
             ui.horizontal(|ui| {
                 let bird_label = ui.label("Number of Birds: "); 
                 let bird_slider = ui.add(egui::Slider::new(&mut self.birds, 0..=100)).labelled_by(bird_label.id);
                 if bird_slider.changed() {
-                    self.simulation = Simulation::random(&mut self.rng, self.birds as usize, self.food as usize, self.mut_chance, self.mut_coeff);
+                    rebuild_simulation = true;
                 }
             });
             ui.horizontal(|ui| {
                 let food_label = ui.label("Number of Food: "); 
                 let food_slider = ui.add(egui::Slider::new(&mut self.food, 0..=50)).labelled_by(food_label.id);
                 if food_slider.changed() {
-                    self.simulation = Simulation::random(&mut self.rng, self.birds as usize, self.food as usize, self.mut_chance, self.mut_coeff);
+                    rebuild_simulation = true;
                 }
             });
             ui.add_space(10.0);
@@ -130,7 +153,14 @@ impl eframe::App for LearnToFlyApp {
                 ui.painter().extend(shapes);
 
             });
+
+
         });
-        ctx.request_repaint_after(Duration::from_millis(1000 / 60 as u64))
+        ctx.request_repaint_after(Duration::from_millis(1000 / 60 as u64));
+        if rebuild_simulation {
+            self.simulation = Simulation::random(&mut self.rng, self.birds as usize, self.food as usize, self.mut_chance, self.mut_coeff, self.generation_length);
+            self.last_gen_statistics = None;
+        }
+
     }
 }

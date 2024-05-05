@@ -49,18 +49,23 @@ const ROTATION_ACCEL: f32 = FRAC_PI_4;
 
 pub struct Simulation  {
     world: World,
-    evolution_algorithm: GeneticAlgorithm<RouletteWheelSelection, UniformCrossover, GaussianMutation>
+    evolution_algorithm: GeneticAlgorithm<RouletteWheelSelection, UniformCrossover, GaussianMutation>,
+    age: u32,
+    generation_length: u32
 }
 
+
 impl Simulation {
-    pub fn random(rng: &mut dyn RngCore, num_animals: usize, num_food: usize, mut_chance: f32, mut_coeff: f32) -> Self {
+    pub fn random(rng: &mut dyn RngCore, num_animals: usize, num_food: usize, mut_chance: f32, mut_coeff: f32, generation_length: u32) -> Self {
         Self {
             world: World::random(rng, num_animals, num_food),
             evolution_algorithm: GeneticAlgorithm::new(
                 RouletteWheelSelection {},
                 UniformCrossover{},
                 GaussianMutation::new(mut_chance,mut_coeff).expect("Cannot instatiate mutation algorithm")
-            )            
+            ),
+            age: 0,
+            generation_length
         }
     }
     
@@ -106,10 +111,20 @@ impl Simulation {
     }
 
     
-    pub fn step(&mut self, rng: &mut dyn RngCore) {
+    pub fn step(&mut self, rng: &mut dyn RngCore) -> Option<Statistics> {
+        self.age += 1;
         self.process_movements();
         self.process_collisions(rng);
         self.process_brains();
+        
+        if self.age > self.generation_length {
+            let population: Vec<_> = self.world.animals.iter().map(|a| AnimalIndividual::from(a)).collect();
+            let statistics = Statistics::from_population(&population);
+            self.age = 0;
+            self.evolve(rng);
+            return Some(statistics);
+        }
+        None
     }
     
     pub fn evolve(&mut self, rng: &mut dyn RngCore) {
@@ -121,4 +136,30 @@ impl Simulation {
             animal.rotation = rng.gen();
         }
     }
+}
+
+
+#[derive(Debug,Clone,Copy)]
+pub struct Statistics {
+    pub min_score: u32,
+    pub avg_score: f32,
+    pub max_score: u32
+}
+
+impl Statistics {
+    pub fn from_population<I>(population: &[I]) -> Self 
+where
+I: Individual {
+    let pop_scores: Vec<u32> = population.iter().map(|i| i.fitness() as u32).collect();
+    let min_score = pop_scores.iter().min().unwrap_or(&0);
+    let max_score = pop_scores.iter().max().unwrap_or(&0);
+    let tot_score: u32 = pop_scores.iter().sum();
+    Self {
+        min_score: *min_score,
+        max_score: *max_score,
+        avg_score: tot_score as f32 / pop_scores.len() as f32
+    }
+    
+}
+
 }
