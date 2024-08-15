@@ -2,21 +2,22 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap");
 
+html {
+    --light-color: rgb(255, 252, 242);
+    --dark-color: rgb(37, 36, 34);
 * {
   margin: 0;
   padding: 0;
 }
 
 body {
-  font-family: "Poppins", sans-serif;
+    font-family: "Poppins", sans-serif;
+    background: var(--light-color);
+    color: var(--dark-color);
 }
 
 html {
   scroll-behavior: smooth;
-}
-
-p {
-  color: rgb(85, 85, 85);
 }
 
 .main-container {
@@ -454,4 +455,22 @@ footer p {
 .input-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 800px) {
+    .input-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+      background: var(--dark-color);
+      color: var(--light-color);
+  }
 }
