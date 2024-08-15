@@ -9,8 +9,8 @@
 
   </head>
   <body>
+    <div class="main-container">
     <h1>Birds Evolution Simulation</h1>
-
     <div class="input-container">
       <label>
         <p>Number of Animals: <output id="simulation-animals-value"></output></p>
@@ -29,9 +29,10 @@
         <input type="range" name="simulation-mutation-coefficient" id="simulation-mut-coeff" min="0" max="1" step="0.01">
       </label>
     </div>
-    <canvas id="simulation-viewport" width="800" height="600">
+    <canvas id="simulation-viewport">
       Runtime view of the evolution of birds in a simulated World!
     </canvas>
+    </div>
     <script src="./bootstrap.js"></script>
   </body>
 </html>

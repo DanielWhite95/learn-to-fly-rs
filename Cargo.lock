@@ -1365,8 +1365,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a06fddc2749e0528d2813f95e050e87e52c8cbbae56223b9babf73b3e53b0cc6"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "wasi",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1711,6 +1713,16 @@ dependencies = [
  "neural-network",
  "rand",
  "test-case",
+]
+
+[[package]]
+name = "lib-simulation-wasm"
+version = "0.1.0"
+dependencies = [
+ "getrandom",
+ "lib-simulation",
+ "rand",
+ "wasm-bindgen",
 ]
 
 [[package]]

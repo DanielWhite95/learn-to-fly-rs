@@ -8,6 +8,25 @@ pub fn whos_that_dog() -> String {
 }
 
 #[wasm_bindgen]
+#[derive(Debug,Clone)]
+pub struct Statistics {
+    pub min_score: u32,
+    pub avg_score: f32,
+    pub max_score: u32
+}
+
+impl From<&lib_simulation::Statistics> for Statistics {
+    fn from(value: &lib_simulation::Statistics) -> Self {
+        Self {
+            min_score: value.min_score,
+            avg_score: value.avg_score,
+            max_score: value.max_score
+        }
+    }
+}
+
+
+#[wasm_bindgen]
 struct Simulation {
     rng: ThreadRng,
     sim: lib_simulation::Simulation
@@ -28,8 +47,11 @@ impl Simulation {
     }
 
 
-    pub fn step(&mut self) {
-        self.sim.step(&mut self.rng);
+    pub fn step(&mut self) -> Option<Statistics> {
+        if let Some(stats) = self.sim.step(&mut self.rng) {
+            return Some(Statistics::from(&stats));
+        }
+        None
     }
 }
 

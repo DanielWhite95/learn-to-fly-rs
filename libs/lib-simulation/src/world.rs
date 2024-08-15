@@ -19,7 +19,7 @@ impl World {
             food: (0..num_food).map(|_| Food::random(rng)).collect()
         }
     }
-    
+
     pub fn animals(&self) -> &[Animal] {
         &self.animals
     }
@@ -27,6 +27,5 @@ impl World {
     pub fn food(&self) -> &[Food] {
         &self.food
     }
-    
 
-} 
+}
