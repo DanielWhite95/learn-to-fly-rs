@@ -1,6 +1,9 @@
 import * as simulationWasm from 'lib-simulation-wasm';
 
 let sim = null;
+const generationNumberOutput = document.getElementById("generation-number")
+const generationAgeOutput = document.getElementById("generation-age")
+const generationScoreOutput = document.getElementById("generation-score")
 
 function drawAnimal(ctx, animal, canvasWidth, canvasHeight) {
     ctx.fillStyle = "rgb(255, 0, 0)";
@@ -30,18 +33,27 @@ function drawFrame() {
         drawFood(ctx, food, canvasWidth, canvasHeight)
     }
     const stats = sim.step();
+    generationAgeOutput.textContent = Number(generationAgeOutput.textContent) + 1;
+    if (stats) {
+        generationAgeOutput.textContent = 0;
+        generationNumberOutput.textContent = Number(generationNumberOutput.textContent) + 1;
+        generationScoreOutput.textContent = stats.avg_score;
+    }
     window.requestAnimationFrame(drawFrame)
 };
 
 function startSimulation(animals, food, mutRate, mutCoeff) {
     sim = new simulationWasm.Simulation(animals, food, mutRate, mutCoeff);
+    generationAgeOutput.textContent = "0";
+    generationNumberOutput.textContent = "1";
+    generationScoreOutput.textContent = "0.00"
 }
 
 function setupCanvas() {
     const canvas = document.getElementById("simulation-viewport");
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.parentNode.getBoundingClientRect();
-    const canvasWidth = rect.width * 0.9;
+    const canvasWidth = rect.width;
     const canvasHeight = canvasWidth / 16 * 9;
     // Set the "actual" size of the canvas
     canvas.width = canvasWidth * dpr;
