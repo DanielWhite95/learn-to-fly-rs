@@ -8,7 +8,7 @@ use nalgebra::geometry::Point2;
 use genetic_algorithm::{GeneticAlgorithm, Chromosome, Individual, RouletteWheelSelection, UniformCrossover, GaussianMutation};
 use nalgebra::{Rotation2, wrap, distance};
 use rand::{rngs, Rng, RngCore};
-use std::f32::consts::FRAC_PI_4;
+use std::f32::consts::{FRAC_PI_4, PI};
 
 /// Minimum speed of a bird.
 ///
@@ -68,7 +68,7 @@ impl Simulation {
             generation_length
         }
     }
-    
+
     pub fn world(&self) -> &World {
         &self.world
     }
@@ -81,42 +81,44 @@ impl Simulation {
     }
 
     fn process_collisions(&mut self, rng: &mut dyn RngCore) {
+        let animal_pos: Vec<Point2<f32>> = self.world.animals.iter().map(|a| a.position).collect();
         for animal in &mut self.world.animals {
             for food in &mut self.world.food {
                 if distance(&animal.position, &food.position) < 0.01 {
                     food.position = rng.gen();
                     animal.score += 1;
                 }
-                
+
+            }
+            for other_animal in animal_pos.iter().filter(|o| !animal.position.eq(o)) {
+                if distance(&animal.position, other_animal) < 0.01 {
+                    animal.rotation = Rotation2::new(animal.rotation.angle() + PI);
+                }
             }
         }
     }
-    
+
     fn process_brains(&mut self) {
-        let foods = self.world.food.as_slice();
-        // println!("Birds are thinking...");
+        let foods: Vec<Point2<f32>> = self.world.food.iter().map(|f| f.position).collect();
+        let animals: Vec<Point2<f32>> = self.world.animals.iter().map(|a| a.position).collect();
         for (i, animal) in self.world.animals.iter_mut().enumerate() {
-            // println!("- Bird {}:", i+1);
-            let vision = animal.eye.process_vision(animal.position, animal.rotation, foods);
-            // println!("\tVision: {:?}", vision);
+            let mut vision = animal.eye.process_vision(animal.position, animal.rotation, &foods);
+            vision.extend(animal.eye.process_vision(animal.position, animal.rotation, &animals));
             let brain_response = animal.brain.propagate(vision.as_slice());
-            // println!("\tBrain Response: {:?}", brain_response);
             let speed = brain_response[0].clamp(-SPEED_ACCEL, SPEED_ACCEL);
             let rotation = brain_response[1].clamp(-ROTATION_ACCEL, ROTATION_ACCEL);
-            // println!("\tNew Speed: {:?}", speed);
-            // println!("\tNew rotation: {:?}", rotation);
             animal.speed = (animal.speed + speed).clamp(SPEED_MIN, SPEED_MAX);
             animal.rotation = Rotation2::new(animal.rotation.angle() + rotation);
         }
     }
 
-    
+
     pub fn step(&mut self, rng: &mut dyn RngCore) -> Option<Statistics> {
         self.age += 1;
         self.process_movements();
         self.process_collisions(rng);
         self.process_brains();
-        
+
         if self.age > self.generation_length {
             let population: Vec<_> = self.world.animals.iter().map(|a| AnimalIndividual::from(a)).collect();
             let statistics = Statistics::from_population(&population);
@@ -126,7 +128,7 @@ impl Simulation {
         }
         None
     }
-    
+
     pub fn evolve(&mut self, rng: &mut dyn RngCore) {
         let population: Vec<AnimalIndividual> = self.world.animals().iter().map(|a| a.into()).collect();
         let new_population = self.evolution_algorithm.evolve(&population, rng).expect("Cannot evolve population");
@@ -147,7 +149,7 @@ pub struct Statistics {
 }
 
 impl Statistics {
-    pub fn from_population<I>(population: &[I]) -> Self 
+    pub fn from_population<I>(population: &[I]) -> Self
 where
 I: Individual {
     let pop_scores: Vec<u32> = population.iter().map(|i| i.fitness() as u32).collect();
@@ -159,7 +161,7 @@ I: Individual {
         max_score: *max_score,
         avg_score: tot_score as f32 / pop_scores.len() as f32
     }
-    
+
 }
 
 }

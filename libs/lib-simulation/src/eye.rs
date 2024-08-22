@@ -8,24 +8,24 @@ pub(crate) const CELLS: usize = 13;
 
 #[derive(Debug)]
 pub struct Eye {
-    fov_range: f32, 
+    fov_range: f32,
     fov_angle: f32,
     cells: usize
 }
 
 impl Eye {
-    
+
     pub fn new(fov_range: f32, fov_angle: f32, cells: usize) -> Self {
         assert!(fov_range <= 1.0 && fov_range >= 0.0);
         assert!(cells > 0);
         Self { fov_range, fov_angle, cells }
     }
-    
-    pub(crate) fn process_vision(&self, position: Point2<f32>, rotation: Rotation2<f32>, foods: &[Food]) -> Vec<f32> {
+
+    pub(crate) fn process_vision(&self, position: Point2<f32>, rotation: Rotation2<f32>, elements: &[Point2<f32>]) -> Vec<f32> {
         let mut activated_cells: Vec<f32> = (0..self.cells).map(|_| 0.0).collect();
-        
-        for f in foods.iter() {
-            let dist_vec = f.position - position;
+
+        for f in elements.iter().filter(|f| !position.eq(f)) {
+            let dist_vec = f - position;
             let dist = dist_vec.norm();
             if dist > self.fov_range {
                 return activated_cells;
@@ -80,14 +80,14 @@ mod tests {
             } else if f >= 0.3 {
                 "+"
             } else if f > 0.0 {
-                "." 
+                "."
             } else {
                 " "
             }).collect();
             println!("{:?}", chars);
             chars.join("")
         }
-        
+
         fn run(self) {
             let eye = Eye {fov_range: self.fov_range, fov_angle: self.fov_angle, ..Default::default()};
             let actual_vision = eye.process_vision(Point2::new(self.x, self.y), Rotation2::new(self.rot), self.foods.as_slice());
@@ -119,8 +119,8 @@ mod tests {
             fov_angle: FRAC_PI_2,
             x: 0.5,
             y: 0.5,
-            rot: 0.0, 
-            expected_vision: expected_vision 
+            rot: 0.0,
+            expected_vision: expected_vision
         }.run()
     }
 

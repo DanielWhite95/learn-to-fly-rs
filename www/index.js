@@ -69,8 +69,8 @@ function setupCanvas() {
         console.error("Cannot load canvas for simulation");
         throw new Exception("Cannot load canvas")
     }
-    // Scale the context to ensure correct drawing operations
     ctx.scale(dpr, dpr);
+    // Scale the context to ensure correct drawing operations
     ctx.globalCompositeOperation = "destination-over";
 }
 

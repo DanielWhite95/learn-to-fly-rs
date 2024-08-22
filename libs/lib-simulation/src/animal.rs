@@ -26,8 +26,9 @@ pub struct Brain {
 impl Brain {
     pub fn topology(eye: &Eye) -> Vec<LayerTopology> {
         vec![
-                nn::LayerTopology{ neurons: eye.cells() }, 
-                nn::LayerTopology{ neurons: 2 } // Output is rotation angle and speed 
+            nn::LayerTopology{ neurons: eye.cells() * 2 }, // Input is vision for food and vision for other animals
+            nn::LayerTopology{ neurons: 10 },
+                nn::LayerTopology{ neurons: 2 } // Output is rotation angle and speed
             ]
     }
 }
@@ -35,8 +36,9 @@ impl Brain {
 impl Animal {
     pub fn brain_topology_from_eyes(eye: &Eye) -> Vec<LayerTopology>{
         vec![
-                nn::LayerTopology{ neurons: eye.cells() }, 
-                nn::LayerTopology{ neurons: 2 } // Output is rotation angle and speed 
+            nn::LayerTopology{ neurons: eye.cells() * 2 },
+                        nn::LayerTopology{ neurons: 10 },
+                nn::LayerTopology{ neurons: 2 } // Output is rotation angle and speed
             ]
     }
 
@@ -49,7 +51,7 @@ impl Animal {
         ).expect("Cannot build animal brain!");
         for layer in brain.get_layers() {
             for neuron in layer.get_neurons() {
-                
+
             }
         }
         Self {
@@ -100,7 +102,7 @@ impl From<&Animal> for AnimalIndividual {
         Self {
             fitness: value.score as f32,
             chromosome: Chromosome::from_iter(animal_weigths)
-           
+
         }
     }
 }
@@ -117,8 +119,7 @@ impl From<&AnimalIndividual> for Animal {
             position: Point2::new(0.0, 0.0),
             rotation: Rotation2::new(0.0),
             speed: 0.001,
-            
+
         }
     }
 }
-
