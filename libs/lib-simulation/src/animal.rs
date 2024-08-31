@@ -28,6 +28,8 @@ impl Brain {
         vec![
             nn::LayerTopology{ neurons: eye.cells() * 2 }, // Input is vision for food and vision for other animals
             nn::LayerTopology{ neurons: 10 },
+            nn::LayerTopology{ neurons: 5 },
+            nn::LayerTopology{ neurons: 10 },
                 nn::LayerTopology{ neurons: 2 } // Output is rotation angle and speed
             ]
     }
@@ -37,8 +39,10 @@ impl Animal {
     pub fn brain_topology_from_eyes(eye: &Eye) -> Vec<LayerTopology>{
         vec![
             nn::LayerTopology{ neurons: eye.cells() * 2 },
-                        nn::LayerTopology{ neurons: 10 },
-                nn::LayerTopology{ neurons: 2 } // Output is rotation angle and speed
+            nn::LayerTopology{ neurons: 10 },
+            nn::LayerTopology{ neurons: 5 },
+            nn::LayerTopology{ neurons: 10 },
+            nn::LayerTopology{ neurons: 2 } // Output is rotation angle and speed
             ]
     }
 

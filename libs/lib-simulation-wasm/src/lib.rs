@@ -35,9 +35,9 @@ struct Simulation {
 #[wasm_bindgen]
 impl Simulation {
     #[wasm_bindgen(constructor)]
-    pub fn new(animals: usize, food: usize, mut_chance: f32, mut_coeff: f32) -> Self {
+    pub fn new(animals: usize, food: usize, mut_chance: f32, mut_coeff: f32, age: u32) -> Self {
         let mut rng = thread_rng();
-        let sim = lib_simulation::Simulation::random(&mut rng, animals, food, mut_chance, mut_coeff, 50);
+        let sim = lib_simulation::Simulation::random(&mut rng, animals, food, mut_chance, mut_coeff, age);
 
         Self { rng, sim }
     }

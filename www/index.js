@@ -1,6 +1,7 @@
 import * as simulationWasm from 'lib-simulation-wasm';
 
 let sim = null;
+let drawing = true;
 const generationNumberOutput = document.getElementById("generation-number")
 const generationAgeOutput = document.getElementById("generation-age")
 const generationScoreOutput = document.getElementById("generation-score")
@@ -16,6 +17,9 @@ function drawFood(ctx, food, canvasWidth, canvasHeight) {
 }
 
 function drawFrame() {
+    if (!drawing) {
+         return window.requestAnimationFrame(drawFrame)
+    }
     const canvas = document.getElementById("simulation-viewport");
     const canvasHeight = canvas.height;
     const canvasWidth = canvas.width;
@@ -42,8 +46,23 @@ function drawFrame() {
     window.requestAnimationFrame(drawFrame)
 };
 
+function skipGeneration() {
+    drawing = false;
+    let skippedGeneration = 0;
+    while (skippedGeneration < 10) {
+        const stats = sim.step();
+        if (stats) {
+            skippedGeneration++
+            generationNumberOutput.textContent = Number(generationNumberOutput.textContent) + 1;
+        };
+    };
+    generationAgeOutput.textContent = 0;
+    drawing = true;
+
+}
+
 function startSimulation(animals, food, mutRate, mutCoeff) {
-    sim = new simulationWasm.Simulation(animals, food, mutRate, mutCoeff);
+    sim = new simulationWasm.Simulation(animals, food, mutRate, mutCoeff, 500);
     generationAgeOutput.textContent = "0";
     generationNumberOutput.textContent = "1";
     generationScoreOutput.textContent = "0.00"
@@ -74,11 +93,15 @@ function setupCanvas() {
     ctx.globalCompositeOperation = "destination-over";
 }
 
+
+
 function init () {
     const simulationAnimals = document.getElementById("simulation-animals");
     const simulationFood = document.getElementById("simulation-food");
     const simulationMutationRate = document.getElementById("simulation-mut-rate");
     const simulationMutationCoefficient = document.getElementById("simulation-mut-coeff");
+    const fastForwardButton = document.getElementById("fast-forward-button");
+
 
     const simulationAnimalsOutput = document.getElementById("simulation-animals-value");
     simulationAnimalsOutput.textContent = simulationAnimals.value
@@ -125,6 +148,10 @@ function init () {
         );
         simulationMutationCoefficientOutput.textContent = event.target.value
     });
+    fastForwardButton.addEventListener("click", (event) => {
+        skipGeneration()
+    });
+
 
     startSimulation(
             simulationAnimals.value,
